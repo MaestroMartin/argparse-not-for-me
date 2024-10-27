@@ -4,11 +4,11 @@ import configparser
 import difflib
 import os
 
-# Načti konfigurační soubor
+# Load conif file 
 config = configparser.ConfigParser()
 config.read('config.ini')
 
-# Funkce pro připojení k databázi
+# Funktion on load db
 def connect_to_db(db_name):
     try:
         db_config = config[db_name]
@@ -23,7 +23,7 @@ def connect_to_db(db_name):
         print(f"Chyba při připojení k databázi: {error}")
         return None
 
-# Funkce pro načtení JSON souboru
+# funktion for load JSON file
 def load_json_file(file_path):
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
@@ -32,17 +32,17 @@ def load_json_file(file_path):
         print(f"Chyba při načítání souboru {file_path}: {e}")
         return None
 
-# Funkce pro získání JSON dat z databáze
+# Funktion for get JSOn file of db
 def get_db_json_data(cursor, row_id):
     cursor.execute("SELECT data FROM template WHERE id = %s", (row_id,))
     result = cursor.fetchone()
     if result:
-        return result[0]  # Vrací JSON data z databáze
+        return result[0]  # give JSON file
     else:
         print(f"Řádek s id {row_id} nebyl nalezen.")
         return None
 
-# Funkce pro zvýraznění rozdílů mezi dvěma JSONy
+# funktion for mark differences between JSOn files
 def highlight_differences(json1, json2):
     json1_str = json.dumps(json1, indent=4, sort_keys=True)
     json2_str = json.dumps(json2, indent=4, sort_keys=True)
@@ -51,39 +51,39 @@ def highlight_differences(json1, json2):
     
     return '\n'.join(diff)
 
-# Funkce pro aktualizaci databáze
+# Funktion for update db
 def update_db_json(cursor, row_id, new_data):
     try:
         cursor.execute("UPDATE template SET data = %s WHERE id = %s", (json.dumps(new_data), row_id))
     except Exception as e:
         print(f"Chyba při aktualizaci řádku {row_id}: {e}")
 
-# Hlavní funkce skriptu
+# Main funktion script
 def main(file_path, db_name, row_id):
-    # Připojení k databázi
+    # Connect to db
     connection = connect_to_db(db_name)
     if connection is None:
         return
     
     cursor = connection.cursor()
 
-    # Načtení JSON souboru
+    # Load Json file
     file_json_data = load_json_file(file_path)
     if file_json_data is None:
         return
 
-    # Získání dat z databáze
+    # get data from json 
     db_json_data = get_db_json_data(cursor, row_id)
     if db_json_data is None:
         return
 
-    # Porovnání dat
+    # comper between data
     if db_json_data != file_json_data:
         print("Rozdíly nalezeny:")
         diff = highlight_differences(db_json_data, file_json_data)
         print(diff)
 
-        # Zeptat se uživatele, zda chce přepsat data v databázi
+        # Ask user, if he want to rewrite data in db
         user_input = input("Chcete přepsat hodnotu v databázi? (ano/ne): ")
         if user_input.lower() == "ano":
             update_db_json(cursor, row_id, file_json_data)
@@ -94,11 +94,11 @@ def main(file_path, db_name, row_id):
     else:
         print("Data jsou identická, není potřeba žádná aktualizace.")
 
-    # Uzavřít připojení
+    # Close connection
     cursor.close()
     connection.close()
 
-# Spuštění skriptu
+# Run script
 if __name__ == "__main__":
     import argparse
 
